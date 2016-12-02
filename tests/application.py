@@ -1,12 +1,8 @@
-import logging
-
 from spyne import Application, Unicode
 from spyne.model.complex import ComplexModel
 from spyne.protocol.soap.soap11 import Soap11
 
 from spynedelegate.meta import DelegateBase, ExtensibleServiceBase, rpc
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 # models
