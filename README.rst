@@ -4,8 +4,9 @@ Spyne Delegate
 
 Extension for spyne so you can easy override services using delegate classes.
 
+Example usage:
 
-Example usage::
+.. code:: python
 
     import logging
     from wsgiref.simple_server import make_server
