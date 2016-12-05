@@ -1,4 +1,5 @@
 from spyne import Application, Unicode
+from spyne import rpc as original_spyne_rpc
 from spyne.model.complex import ComplexModel
 from spyne.protocol.soap.soap11 import Soap11
 
@@ -46,6 +47,10 @@ class FarmDelegate(ChickenDelegate, CowDelegate):
 # service
 class FarmService(ExtensibleServiceBase):
     delegate = FarmDelegate
+
+    @original_spyne_rpc(_returns=Unicode)
+    def thisStillWorks(ctx):  # noqa
+        return "Old fashioned spyne"
 
 
 farm_application = Application(
