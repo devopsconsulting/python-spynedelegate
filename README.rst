@@ -15,7 +15,7 @@ Example usage:
     from spyne.model.complex import ComplexModel
     from spyne.protocol.soap.soap11 import Soap11
     from spyne.util.wsgi_wrapper import WsgiMounter
-    from spynedelegate import DelegateBase, ExtensibleServiceBase, rpc
+    from spynedelegate.meta import DelegateBase, ExtensibleServiceBase, rpc
 
 
     logging.basicConfig(level=logging.DEBUG)
