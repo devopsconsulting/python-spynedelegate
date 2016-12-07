@@ -8,17 +8,12 @@ Example usage:
 
 .. code:: python
 
-    import logging
-    from wsgiref.simple_server import make_server
-
     from spyne import Application, Unicode
+    from spyne import rpc as original_spyne_rpc
     from spyne.model.complex import ComplexModel
     from spyne.protocol.soap.soap11 import Soap11
-    from spyne.util.wsgi_wrapper import WsgiMounter
+
     from spynedelegate.meta import DelegateBase, ExtensibleServiceBase, rpc
-
-
-    logging.basicConfig(level=logging.DEBUG)
 
 
     # models
@@ -54,14 +49,24 @@ Example usage:
             return self.gen_name(cow.name)
 
 
+    class CowDelegateOverridden(CowDelegate):
+        @rpc(Cow, _returns=Unicode)
+        def sayMooh(self, cow):  # noqa
+            return "%s overridden" % self.gen_name(cow.name)
+
+
     # inheritance
-    class FarmDelegate(ChickenDelegate, CowDelegate):
+    class FarmDelegate(ChickenDelegate, CowDelegateOverridden):
         pass
 
 
     # service
     class FarmService(ExtensibleServiceBase):
         delegate = FarmDelegate
+
+        @original_spyne_rpc(_returns=Unicode)
+        def thisStillWorks(ctx):  # noqa
+            return "Old fashioned spyne"
 
 
     farm_application = Application(

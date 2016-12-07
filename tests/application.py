@@ -39,8 +39,14 @@ class CowDelegate(DelegateBase):
         return self.gen_name(cow.name)
 
 
+class CowDelegateOverridden(CowDelegate):
+    @rpc(Cow, _returns=Unicode)
+    def sayMooh(self, cow):  # noqa
+        return "%s overridden" % self.gen_name(cow.name)
+
+
 # inheritance
-class FarmDelegate(ChickenDelegate, CowDelegate):
+class FarmDelegate(ChickenDelegate, CowDelegateOverridden):
     pass
 
 
