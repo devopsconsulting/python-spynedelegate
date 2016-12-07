@@ -1,49 +1,15 @@
-import logging
-
-import multiprocessing
-
-from unittest import TestCase
-
-from wsgiref.simple_server import make_server
-from wsgiref.validate import validator
-
-from spyne.server.wsgi import WsgiApplication
-
 from suds.cache import NoCache
 from suds.client import Client
 
-from .application import farm_application
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-host = '127.0.0.1'
-port = 9876
+from .base import SpyneServerTestCase
 
 
-def spyne_server(queue):
-    wsgi_application = WsgiApplication(farm_application)
-    wsgi_server = make_server(host, port, validator(wsgi_application))
-
-    logger.info('Starting server at %s:%s.' % (host, port))
-    logger.info('WSDL is at: /?wsdl')
-
-    queue.put('server started')
-    wsgi_server.serve_forever()
-
-
-class SpyneClientTestBase(TestCase):
+class SudsClientTest(SpyneServerTestCase):
     @classmethod
     def setUpClass(cls):
+        super(SudsClientTest, cls).setUpClass()
 
-        q = multiprocessing.Queue()
-        cls.server = multiprocessing.Process(target=spyne_server, args=(q,))
-        cls.server.start()
-
-        # wait for wsgi server to start
-        q.get('server started')
-
-        url = "http://%s:%s/?wsdl" % (host, port)
+        url = "http://%s:%s/?wsdl" % (cls.host, cls.port)
         cls.client = Client(url, cache=NoCache())
 
         cls.service = cls.client.sd[0].service
@@ -56,12 +22,12 @@ class SpyneClientTestBase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.server.terminate()
+        super(SudsClientTest, cls).tearDownClass()
 
     def test_wsdl_service_name(self):
         self.assertEqual(self.service.name, "FarmService")
 
-    def test_wsdl_types(self):
-        self.assertEqual(self.service.name, "FarmService")
+    def test_types_namespace(self):
         self.assertEqual(
             self.chicken_type.namespace()[1], "spyne.delegate.chicken")
         self.assertEqual(
@@ -83,4 +49,4 @@ class SpyneClientTestBase(TestCase):
         cow.name = "Supercow"
         cow_result = self.client.service.sayMooh(cow)
         self.assertEqual(
-            cow_result, "{spyne.delegate.farm}sayMooh -> Supercow")
+            cow_result, "{spyne.delegate.farm}sayMooh -> Supercow overridden")
