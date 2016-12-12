@@ -1,4 +1,5 @@
 from spyne import Application, Unicode
+from spyne import rpc as original_spyne_rpc
 from spyne.model.complex import ComplexModel
 from spyne.protocol.soap.soap11 import Soap11
 
@@ -38,14 +39,28 @@ class CowDelegate(DelegateBase):
         return self.gen_name(cow.name)
 
 
+class CowDelegateOverridden(CowDelegate):
+    @rpc(Cow, _returns=Unicode)
+    def sayMooh(self, cow):  # noqa
+        return "%s overridden" % self.gen_name(cow.name)
+
+
 # inheritance
-class FarmDelegate(ChickenDelegate, CowDelegate):
+class FarmDelegate(ChickenDelegate, CowDelegateOverridden):
     pass
 
 
-# service
+# services
+class ChickenService(ExtensibleServiceBase):
+    delegate = ChickenDelegate
+
+
 class FarmService(ExtensibleServiceBase):
     delegate = FarmDelegate
+
+    @original_spyne_rpc(_returns=Unicode)
+    def thisStillWorks(ctx):  # noqa
+        return "Old fashioned spyne"
 
 
 farm_application = Application(

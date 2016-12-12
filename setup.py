@@ -15,12 +15,15 @@ setup(
         'Environment :: Web Environment',
         'Framework :: Spyne',
         'Framework :: Spyne :: 2.12',
+        'Framework :: Spyne :: 2.13',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: Unix',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
     ],
     keywords='spyne delegate',
@@ -37,10 +40,10 @@ setup(
     install_requires=[
         'setuptools',
         'spyne>=2.12',
-        'lxml'
+        'six',
     ],
     # mark test target to require extras.
     extras_require={
-        'test': ['nose', 'coverage', 'suds'],
+        'test': ['nose', 'coverage<4', 'suds-jurko', 'lxml'],
     },
 )

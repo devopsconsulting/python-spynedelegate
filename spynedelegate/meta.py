@@ -1,5 +1,8 @@
 from functools import update_wrapper
+
 import inspect
+
+import six
 
 from spyne.decorator import rpc as original_rpc
 from spyne.service import ServiceBase, ServiceBaseMeta
@@ -62,13 +65,7 @@ class rpc(object):  # noqa
         self.kwargs = kwargs
 
     def __call__(self, func):
-        # if there was allready a decorator on the method, remove it.
-        # only the last decorator counts, when overriding.
-        if isinstance(func, SpyneMethodWrapper):
-            self.wrapped_func = func.func
-        else:
-            self.wrapped_func = func
-
+        self.wrapped_func = func
         return SpyneMethodWrapper(self.wrapped_func, self.args, self.kwargs)
 
 
@@ -104,6 +101,7 @@ class DelegateMetaClass(type):
         return type.__new__(cls, name, bases, delegate_attrs)
 
 
+@six.add_metaclass(DelegateMetaClass)
 class DelegateBase(object):
     """
     Use this as the base class for delegate objects.
@@ -114,8 +112,6 @@ class DelegateBase(object):
     ``self.ctx``
 
     """
-    __metaclass__ = DelegateMetaClass
-
     def __init__(self, ctx=None):
         self.ctx = ctx
 
@@ -159,8 +155,9 @@ class DelegateServiceMetaClass(ServiceBaseMeta):
                 DelegateServiceMetaClass, cls).__init__(name, bases, attrs)
 
 
+@six.add_metaclass(DelegateServiceMetaClass)
 class ExtensibleServiceBase(ServiceBase):
     """
     Use this class instead of ``spyne.ServiceBase``.
     """
-    __metaclass__ = DelegateServiceMetaClass
+    pass
