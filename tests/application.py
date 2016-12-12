@@ -50,7 +50,11 @@ class FarmDelegate(ChickenDelegate, CowDelegateOverridden):
     pass
 
 
-# service
+# services
+class ChickenService(ExtensibleServiceBase):
+    delegate = ChickenDelegate
+
+
 class FarmService(ExtensibleServiceBase):
     delegate = FarmDelegate
 
