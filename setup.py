@@ -40,11 +40,10 @@ setup(
     install_requires=[
         'setuptools',
         'spyne>=2.12',
-        'lxml',
-        'six'
+        'six',
     ],
     # mark test target to require extras.
     extras_require={
-        'test': ['nose', 'coverage<4', 'suds-jurko'],
+        'test': ['nose', 'coverage<4', 'suds-jurko', 'lxml'],
     },
 )
