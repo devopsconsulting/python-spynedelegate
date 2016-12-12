@@ -65,13 +65,7 @@ class rpc(object):  # noqa
         self.kwargs = kwargs
 
     def __call__(self, func):
-        # if there was allready a decorator on the method, remove it.
-        # only the last decorator counts, when overriding.
-        if isinstance(func, SpyneMethodWrapper):
-            self.wrapped_func = func.func
-        else:
-            self.wrapped_func = func
-
+        self.wrapped_func = func
         return SpyneMethodWrapper(self.wrapped_func, self.args, self.kwargs)
 
 
