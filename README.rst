@@ -12,13 +12,14 @@ Example usage:
 
     from wsgiref.simple_server import make_server
     from wsgiref.validate import validator
-
+    
     from spyne import Application, Unicode
     from spyne import rpc as original_spyne_rpc
 
     from spyne.model.complex import ComplexModel
     from spyne.protocol.soap.soap11 import Soap11
     from spyne.server.wsgi import WsgiApplication
+    from spyne.util.wsgi_wrapper import WsgiMounter
 
     from spynedelegate.meta import DelegateBase, ExtensibleServiceBase, rpc
 
