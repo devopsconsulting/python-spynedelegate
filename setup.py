@@ -8,7 +8,7 @@ setup(
     name='spyne-delegate',
     # extract version from module.
     version=__version__,
-    description="",
+    description="Extension for spyne so you can easy override services using delegate classes",
     long_description=open('README.rst').read(),
     classifiers=[
         'Development Status :: 3 - Alpha',
