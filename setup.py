@@ -13,10 +13,6 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
-        'Framework :: Spyne',
-        'Framework :: Spyne :: 2.12',
-        'Framework :: Spyne :: 2.13',
-        'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: Unix',
         'Programming Language :: Python',
