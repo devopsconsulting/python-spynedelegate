@@ -50,3 +50,7 @@ class SudsClientTest(SpyneServerTestCase):
         cow_result = self.client.service.sayMooh(cow)
         self.assertEqual(
             cow_result, "{spyne.delegate.farm}sayMooh -> Supercow overridden")
+
+        another_result = self.client.service.generateName('Mooh')
+        self.assertEqual(
+            another_result, "{spyne.delegate.farm}generateName -> Mooh")

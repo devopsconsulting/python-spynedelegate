@@ -8,12 +8,22 @@ Example usage:
 
 .. code:: python
 
+    import logging
+
+    from wsgiref.simple_server import make_server
+    from wsgiref.validate import validator
+
     from spyne import Application, Unicode
     from spyne import rpc as original_spyne_rpc
+
     from spyne.model.complex import ComplexModel
     from spyne.protocol.soap.soap11 import Soap11
+    from spyne.server.wsgi import WsgiApplication
 
     from spynedelegate.meta import DelegateBase, ExtensibleServiceBase, rpc
+
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
 
 
     # models
@@ -52,7 +62,14 @@ Example usage:
     class CowDelegateOverridden(CowDelegate):
         @rpc(Cow, _returns=Unicode)
         def sayMooh(self, cow):  # noqa
-            return "%s overridden" % self.gen_name(cow.name)
+            # call the super and add a 'overridden' string
+            result = super(CowDelegateOverridden, self).sayMooh(cow)
+            return "%s overridden" % result
+
+        @rpc(Unicode, _returns=Unicode)
+        def generateName(self, name):
+            # shows that we call a regular supermethod
+            return super(CowDelegateOverridden, self).gen_name(name)
 
 
     # inheritance
@@ -60,7 +77,11 @@ Example usage:
         pass
 
 
-    # service
+    # services
+    class ChickenService(ExtensibleServiceBase):
+        delegate = ChickenDelegate
+
+
     class FarmService(ExtensibleServiceBase):
         delegate = FarmDelegate
 
@@ -77,11 +98,14 @@ Example usage:
         out_protocol=Soap11()
     )
 
+    if __name__ == "__main__":
+        wsgi_application = WsgiApplication(farm_application)
+        wsgi_server = make_server(
+            'localhost', 9876, validator(wsgi_application))
 
-    wsgi_mounter = WsgiMounter({
-        'farm': farm_application,
-    })
+        logger.info('Starting server at %s:%s.' % ('localhost', 9876))
+        logger.info('WSDL is at: /?wsdl')
 
-    server = make_server('0.0.0.0', 8000, wsgi_mounter)
-    server.serve_forever()
+        wsgi_server.serve_forever()
+
 
