@@ -6,7 +6,6 @@ from .application import Chicken, ChickenDelegate, ChickenService
 
 
 class MetaClassTestCase(TestCase):
-    host = '127.0.0.1'
 
     def test_spyne_method_wrapper(self):
         """We can still call the original function of a SpyneMethodWrapper"""
