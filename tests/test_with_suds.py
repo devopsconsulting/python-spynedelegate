@@ -38,6 +38,10 @@ class SudsClientTest(SpyneServerTestCase):
         self.assertTrue('sayMooh' in self.methods)
         self.assertTrue('thisStillWorks' in self.methods)
 
+        # the function noInheritance should not be there as we set
+        # 'collect_base_methods' to False
+        self.assertFalse('noInheritance' in self.methods)
+
         chicken = self.client.factory.create("ns0:Chicken")
         chicken.name = "toktok"
         chicken_results = self.client.service.multiplyChickens(chicken)
