@@ -58,8 +58,19 @@ Example usage:
         def sayMooh(self, cow):  # noqa
             return self.gen_name(cow.name)
 
+        @rpc(Cow, _returns=Unicode)
+        def noInheritance(self, cow):  # noqa
+            # This method won't be inherited because we set the 
+            # collect_base_methods = False in the overridden delegate
+            return self.gen_name(cow.name)
+
 
     class CowDelegateOverridden(CowDelegate):
+
+        # With this property we don't expose inherited methods from the base
+        # class
+        collect_base_methods = False
+
         @rpc(Cow, _returns=Unicode)
         def sayMooh(self, cow):  # noqa
             # call the super and add a 'overridden' string
