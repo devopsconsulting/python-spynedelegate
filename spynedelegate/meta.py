@@ -82,8 +82,9 @@ class DelegateMetaClass(type):
         spyne_attrs = {}
 
         # collect spyne methods from base classes.
-        for base in reversed(bases):
-            spyne_attrs.update(getattr(base, '_spyne_cls_dict', {}))
+        if attrs.get('collect_base_methods', True):
+            for base in reversed(bases):
+                spyne_attrs.update(getattr(base, '_spyne_cls_dict', {}))
 
         # collect spyne methods in the delegate class.
         for k, v in attrs.items():
