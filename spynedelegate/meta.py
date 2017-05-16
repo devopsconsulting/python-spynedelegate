@@ -1,4 +1,5 @@
 from functools import update_wrapper
+from copy import copy
 
 import inspect
 
@@ -9,6 +10,9 @@ from spyne.service import ServiceBase, ServiceBaseMeta
 
 __all__ = ('rpc', 'DelegateBase', 'ExtensibleServiceBase')
 
+
+_FORCE_EXCEPTION_NAMESPACE = '_FORCE_EXCEPTION_NAMESPACE'
+_throws = '_throws'
 
 class SpyneMethodWrapper(object):
     """
@@ -24,7 +28,50 @@ class SpyneMethodWrapper(object):
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
-    def get_spyne_rpc(self, delegate_class):
+    def _apply_kwargs_override(self, service_class_attrs):
+        "Hook for implementing patches and fixes for problems in spyne"
+
+        rpc_kwargs = self.kwargs
+
+        # 1. fix exception namespace problem
+        #
+        # This is needed because spyne does not support multiple namespaces
+        # with Fault types. So the first WSDL which is loaded 'wins' and has
+        # the Fault class in it's namespace. This will result in unexpected
+        # results, especially when you have multiple workers with uwsgi. When
+        # we customize this and set the type_name, we have each Fault type
+        # living in it's own namespace See also:
+        # https://github.com/arskom/spyne/blob/master/spyne/interface/_base.py#L193
+        # (fault.__namespace__ = self.get_tns())
+
+        if _FORCE_EXCEPTION_NAMESPACE in service_class_attrs \
+          and _throws in self.kwargs:
+
+            ns = service_class_attrs[_FORCE_EXCEPTION_NAMESPACE]
+            ExceptionType = self.kwargs[_throws]
+
+            # don't modify the original kwargs. No reason.
+            fixed_kwargs = copy(self.kwargs)
+
+            # it might seem that we are making the mistake here of creating a
+            # new type each time an rpc decorator is used with the ``_throws``
+            # argument. That is true, but it doesn't matter. The typename is
+            # the same as the original. And the namespace will be set fixed by
+            # spyne.The only thing we are solving is that we are consistent
+            # with the name and namespace, therefor solving the problem that
+            # the error namespace switches each time we reload the wsdl in
+            # uwsgi.
+            fixed_kwargs[_throws] = ExceptionType.customize(
+                type_name=ExceptionType.__name__,  # same name
+                __namespace__=ns  # all the same namespace
+            )
+            rpc_kwargs = fixed_kwargs
+            
+            # EULGH BAH. (this happens only once at compile/parse time)
+
+        return rpc_kwargs
+
+    def get_spyne_rpc(self, delegate_class, service_class_attrs):
         # determine the arguments of the original method, and cut off
         # ``self`` and ``ctx``.
         _args = inspect.getargspec(self.func)[0][1:]
@@ -49,9 +96,13 @@ class SpyneMethodWrapper(object):
         func_with_sig = update_wrapper(wrapper, bound_func)
 
         # decorate our new wrapper function with the spyne rpc decorator.
-        # use the original aruments to our replacement decorator.
+        # use the original aruments to our replacement decorator,
+        # but apply some fixes to the original kwargs.
         return original_rpc(
-            _args=_args, *self.args, **self.kwargs)(func_with_sig)
+            _args=_args,
+            *self.args,
+            **self._apply_kwargs_override(service_class_attrs)
+        )(func_with_sig)
 
 
 class rpc(object):  # noqa
@@ -117,12 +168,12 @@ class DelegateBase(object):
         self.ctx = ctx
 
     @classmethod
-    def get__spyne_cls_dict(cls):
+    def get__spyne_cls_dict(cls, service_class_attrs):
         # create a class dict of the same shape a you would get when typing
         # code in a file. The class dict will be used to create a spyne
         # service class.
         return {
-            k: v.get_spyne_rpc(cls) for k, v in cls._spyne_cls_dict.items()}
+            k: v.get_spyne_rpc(cls, service_class_attrs) for k, v in cls._spyne_cls_dict.items()}
 
 
 class DelegateServiceMetaClass(ServiceBaseMeta):
@@ -140,7 +191,7 @@ class DelegateServiceMetaClass(ServiceBaseMeta):
             del attrs['delegate']
 
             # build cls_dict with spyne service methods from the delegate
-            delegate_service_methods = delegate.get__spyne_cls_dict()
+            delegate_service_methods = delegate.get__spyne_cls_dict(attrs)
 
             # add all attributes defined in the class definition.
             delegate_service_methods.update(attrs)
