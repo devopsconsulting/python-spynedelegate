@@ -7,6 +7,7 @@ from spyne import Application, Unicode
 from spyne import rpc as original_spyne_rpc
 
 from spyne.model.complex import ComplexModel
+from spyne.model.fault import Fault
 from spyne.protocol.soap.soap11 import Soap11
 from spyne.server.wsgi import WsgiApplication
 
@@ -27,6 +28,10 @@ class Cow(ComplexModel):
     name = Unicode
 
 
+class ServiceError(Fault):
+    pass
+
+
 # delegates
 class ChickenDelegate(DelegateBase):
     @rpc(Chicken, _returns=Chicken.customize(max_occurs='unbounded'))
@@ -44,13 +49,13 @@ class CowDelegate(DelegateBase):
         # and you can use self as well
         return "%s -> %s" % (self.method_request_string, name)
 
-    @rpc(Cow, _returns=Unicode)
+    @rpc(Cow, _returns=Unicode, _throws=ServiceError)
     def sayMooh(self, cow):  # noqa
         return self.gen_name(cow.name)
 
     @rpc(Cow, _returns=Unicode)
     def noInheritance(self, cow):  # noqa
-        # This method won't be inherited because we set the 
+        # This method won't be inherited because we set the
         # collect_base_methods = False in the overridden delegate
         return self.gen_name(cow.name)
 
@@ -61,7 +66,7 @@ class CowDelegateOverridden(CowDelegate):
     # class
     collect_base_methods = False
 
-    @rpc(Cow, _returns=Unicode)
+    @rpc(Cow, _returns=Unicode, _throws=ServiceError)
     def sayMooh(self, cow):  # noqa
         # call the super and add a 'overridden' string
         result = super(CowDelegateOverridden, self).sayMooh(cow)
@@ -84,6 +89,8 @@ class ChickenService(ExtensibleServiceBase):
 
 
 class FarmService(ExtensibleServiceBase):
+    _FORCE_EXCEPTION_NAMESPACE = 'spyne.delegate.farm'
+
     delegate = FarmDelegate
 
     @original_spyne_rpc(_returns=Unicode)
